@@ -14,6 +14,8 @@ This document outlines the design choices behind the Dockerfile architecture and
 - Ensure consistency across the different stages.
 - Provide essential tools for building and running the application without requiring manual installation. This minimizes maintenance complexity and reduces number of layers in the Docker build, potentially improving build times by preserving layer reusability.
 
+---
+
 ### Build Stage
 **Environment Variables:** Detailed explanations are included directly in the Dockerfile for clarity, as they are not as self-explanatory as the other commands.
 
@@ -22,6 +24,8 @@ This document outlines the design choices behind the Dockerfile architecture and
 2. Create a `README.md` file, as `poetry install` will fail without one. It will be kept deliberately empty to prevent Docker from re-building the layer every time there is a change.
 3. Copy the necessary files for Poetry from the repo. The `src/` directory is intentionally copied last, as it is expected to be updated more frequently than the dependency files. This allows Docker to leverage layer caching more efficiently.
 4. Install dependencies for the project with only the absolutely necessary dependencies, and without storing package caches.
+
+---
 
 ### Runtime Stage
 **Environment Variables:**
