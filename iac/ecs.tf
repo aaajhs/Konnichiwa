@@ -26,7 +26,7 @@ resource "aws_ecs_capacity_provider" "cas" {
 resource "aws_ecs_service" "konnichiwa" {
   name            = "konnichiwa"
   cluster         = aws_ecs_cluster.komodo_assignment.id
-  task_definition = aws_ecs_task_definition.konnichiwa_task_definition.arn
+  task_definition = aws_ecs_task_definition.konnichiwa_task_definition.family
   desired_count   = local.desired_task_count
 
   load_balancer {
