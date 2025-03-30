@@ -45,27 +45,42 @@ jobs:
         docker load --input ${{ runner.temp }}/komodo-assignment.tar
         docker image ls -a
         IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
-        docker run -d -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
+        docker run -d -e API_KEY="${{ secrets.API_KEY }}" -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
 
     - name: Test container functionality
       run: |
+        # Wait for container to start
+        for i in {1..10}; do
+          curl -s http://localhost:4000/ && break
+          echo "Waiting for container to start..."
+          docker ps -a
+          sleep 1
+        done
+
+        # Test / endpoint
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/)
         if [ "$RESPONSE" -ne 200 ]; then
           echo "/ endpoint failed with response $RESPONSE"
           exit 1
         fi
+
+        # Test /health endpoint
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health)
         if [ "$RESPONSE" -ne 200 ]; then
           echo "/health endpoint failed with response $RESPONSE"
           exit 1
         fi
+
+        # Test /inspect endpoint with API Key
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:4000/inspect)
         if [ "$RESPONSE" -ne 200 ]; then
           echo "/inspect endpoint failed with response $RESPONSE"
           exit 1
         fi
+
+        # Test /inspect endpoint without API Key
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/inspect)
-        if [ "$RESPONSE" -ne 401 ]; then
+        if [ "$RESPONSE" -ne 403 ]; then
           echo "API key protection failed with response $RESPONSE"
           exit 1
         fi
