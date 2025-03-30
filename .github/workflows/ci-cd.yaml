@@ -11,86 +11,126 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build and save Docker image
-      run: |
-        SHORT_SHA=$(echo ${{ github.sha }} | cut -c 1-7)
-        docker build -t komodo-assignment:$SHORT_SHA .
-        docker save -o ${{ runner.temp }}/komodo-assignment.tar komodo-assignment:$SHORT_SHA
+      - name: Build and save Docker image
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c 1-7)
+          docker build -t komodo-assignment:$SHORT_SHA .
+          docker save -o ${{ runner.temp }}/komodo-assignment.tar komodo-assignment:$SHORT_SHA
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: komodo-assignment-image
-        path: ${{ runner.temp }}/komodo-assignment.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: komodo-assignment-image
+          path: ${{ runner.temp }}/komodo-assignment.tar
 
   test:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: komodo-assignment-image
-        path: ${{ runner.temp }}
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: komodo-assignment-image
+          path: ${{ runner.temp }}
 
-    - name: Load image and run container
-      run: |
-        docker load --input ${{ runner.temp }}/komodo-assignment.tar
-        docker image ls -a
-        IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
-        docker run -d -e API_KEY="${{ secrets.API_KEY }}" -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
+      - name: Load image and run container
+        run: |
+          docker load --input ${{ runner.temp }}/komodo-assignment.tar
+          docker image ls -a
+          IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
+          docker run -d -e API_KEY="${{ secrets.API_KEY }}" -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
 
-    - name: Test container functionality
-      if: success()
-      run: |
-        # Wait for container to start
-        for i in {1..10}; do
-          curl -s http://localhost:4000/ && break
-          echo "Waiting for container to start..."
-          sleep 1
-        done
+      - name: Test container functionality
+        if: success()
+        run: |
+          # Wait for container to start
+          for i in {1..10}; do
+            curl -s http://localhost:4000/ && break
+            echo "Waiting for container to start..."
+            sleep 1
+          done
 
-        # Test / endpoint
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/)
-        if [ "$RESPONSE" -ne 200 ]; then
-          echo "/ endpoint failed with response $RESPONSE"
-          exit 1
-        fi
+          # Test / endpoint
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/)
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "/ endpoint failed with response $RESPONSE"
+            exit 1
+          fi
 
-        # Test /health endpoint
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health)
-        if [ "$RESPONSE" -ne 200 ]; then
-          echo "/health endpoint failed with response $RESPONSE"
-          exit 1
-        fi
+          # Test /health endpoint
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health)
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "/health endpoint failed with response $RESPONSE"
+            exit 1
+          fi
 
-        # Test /inspect endpoint with API Key
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:4000/inspect)
-        if [ "$RESPONSE" -ne 200 ]; then
-          echo "/inspect endpoint failed with response $RESPONSE"
-          exit 1
-        fi
+          # Test /inspect endpoint with API Key
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:4000/inspect)
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "/inspect endpoint failed with response $RESPONSE"
+            exit 1
+          fi
 
-        # Test /inspect endpoint without API Key
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/inspect)
-        if [ "$RESPONSE" -ne 403 ]; then
-          echo "API key protection failed with response $RESPONSE"
-          exit 1
-        fi
+          # Test /inspect endpoint without API Key
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/inspect)
+          if [ "$RESPONSE" -ne 403 ]; then
+            echo "API key protection failed with response $RESPONSE"
+            exit 1
+          fi
 
-    - name: Print container logs on failure
-      if: failure()
-      run: |
-        docker logs komodo-assignment
+      - name: Print container logs on failure
+        if: failure()
+        run: |
+          docker logs komodo-assignment
 
-    - name: Stop and remove container
-      run: |
-        docker stop komodo-assignment
-        docker rm komodo-assignment
+      - name: Stop and remove container
+        run: |
+          docker stop komodo-assignment
+          docker rm komodo-assignment
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: komodo-assignment-image
+          path: ${{ runner.temp }}
+
+      - name: Load image
+        id: load-image
+        run: |
+          docker load --input ${{ runner.temp }}/komodo-assignment.tar
+          docker image ls -a
+          IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "::set-output name=image_tag::$IMAGE_TAG"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: komodo-assignment
+          IMAGE_TAG: ${{ steps.load-image.outputs.image_tag }}
+        run: |
+          docker tag komodo-assignment:$IMAGE_TAG $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
