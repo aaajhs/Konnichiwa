@@ -19,8 +19,9 @@ jobs:
 
     - name: Build and save Docker image
       run: |
-        docker build -t komodo-assignment:$(echo ${{ github.sha }} | cut -c 1-7) .
-        docker save -o ${{ runner.temp }}/komodo-assignment.tar komodo-assignment:$(echo ${{ github.sha }} | cut -c 1-7)
+        SHORT_SHA=$(echo ${{ github.sha }} | cut -c 1-7)
+        docker build -t komodo-assignment:$SHORT_SHA .
+        docker save -o ${{ runner.temp }}/komodo-assignment.tar komodo-assignment:$SHORT_SHA
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -39,7 +40,14 @@ jobs:
         name: komodo-assignment-image
         path: ${{ runner.temp }}
 
-    - name: Load image
+    - name: Load image and run container
       run: |
         docker load --input ${{ runner.temp }}/komodo-assignment.tar
         docker image ls -a
+        IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
+        docker run -d -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
+
+    - name: Stop and remove container
+      run: |
+        docker stop komodo-assignment
+        docker rm komodo-assignment
