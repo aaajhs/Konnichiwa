@@ -1,6 +1,15 @@
+'''
+Using a virtual environment is recommended, although not strictly necessary.
+Use the following commands to create and activate a venv:
+    $ python -m venv venv
+    $ source venv/bin/activate'
+Make sure to install the required dependencies using:
+    $ pip install requests
+'''
+
 import os
 import sys
-import requests  # Requires installation with 'pip install requests'
+import requests
 
 api_key = os.getenv('API_KEY')
 api_url = os.getenv('API_URL')
