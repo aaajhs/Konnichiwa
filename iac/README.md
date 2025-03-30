@@ -1,6 +1,6 @@
-# Terraform
+# IaC (Infrastructure as Code)
 
-IaC (Infrastructure as Code) to deploy the Konnichiwa service to AWS.
+Terraform code to deploy the Konnichiwa service to AWS.
 
 ## Caveats
 1. The files in this directory are for reference **only**. They **will not work as-is** because most of the necessary variables and sensitive values have been redacted or removed.
