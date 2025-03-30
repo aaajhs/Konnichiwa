@@ -112,8 +112,7 @@ jobs:
           docker load --input ${{ runner.temp }}/komodo-assignment.tar
           docker image ls -a
           IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
-          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
-          echo "::set-output name=image_tag::$IMAGE_TAG"
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
