@@ -70,10 +70,17 @@ jobs:
             exit 1
           fi
 
-          # Test /inspect endpoint with API Key
+          # Test /inspect endpoint with the correct API Key
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:4000/inspect)
           if [ "$RESPONSE" -ne 200 ]; then
             echo "/inspect endpoint failed with response $RESPONSE"
+            exit 1
+          fi
+
+          # Test /inspect endpoint with an incorrect API Key
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer wrong-api-key" http://localhost:4000/inspect)
+          if [ "$RESPONSE" -ne 401 ]; then
+            echo "API key protection failed with response $RESPONSE"
             exit 1
           fi
 
