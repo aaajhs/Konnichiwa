@@ -47,6 +47,29 @@ jobs:
         IMAGE_TAG=$(docker image ls --format "{{.Tag}}" komodo-assignment)
         docker run -d -p 4000:4000 --name komodo-assignment komodo-assignment:$IMAGE_TAG
 
+    - name: Test container functionality
+      run: |
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/)
+        if [ "$RESPONSE" -ne 200 ]; then
+          echo "/ endpoint failed with response $RESPONSE"
+          exit 1
+        fi
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health)
+        if [ "$RESPONSE" -ne 200 ]; then
+          echo "/health endpoint failed with response $RESPONSE"
+          exit 1
+        fi
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.API_KEY }}" http://localhost:4000/inspect)
+        if [ "$RESPONSE" -ne 200 ]; then
+          echo "/inspect endpoint failed with response $RESPONSE"
+          exit 1
+        fi
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/inspect)
+        if [ "$RESPONSE" -ne 401 ]; then
+          echo "API key protection failed with response $RESPONSE"
+          exit 1
+        fi
+
     - name: Stop and remove container
       run: |
         docker stop komodo-assignment
