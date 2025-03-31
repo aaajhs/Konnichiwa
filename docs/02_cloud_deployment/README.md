@@ -2,7 +2,7 @@
 
 This document outlines the design choices behind the current AWS infrastructure architecture, as well as the compromises made to stay within cost constraints.
 
-Load tests have been conducted to ensure the infrastructure is capable of meeting project requirements. For more details on the load tests, please refer to the [load test documentation](./load_test_results/README.md).
+Load tests have been conducted to ensure the infrastructure is capable of meeting project requirements. For more details on the load tests, please refer to the [Load Test Results](./load_test_results/README.md) document.
 
 ## Caveats
 To keep the architecture within the AWS free tier limitations, the following compromises and workarounds were made:
