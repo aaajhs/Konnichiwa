@@ -11,7 +11,7 @@ The following secrets must be provided in the repository's settings page > Secre
 ## Architecture
 
 ### Build Job
-**Steps Overview:**
+#### Steps Overview:
 1. Build the Docker image and tag it with a shorthand (7 characters long) of the Git commit hash that triggered the workflow run.
 2. Save the image as a .tar file.
 3. Upload the image as a .tar file as an artifact, available for use by successive jobs.
@@ -21,7 +21,7 @@ The following secrets must be provided in the repository's settings page > Secre
 ### Test Job
 This job will only run only if the build job is successful.
 
-**Steps Overview:**
+#### Steps Overview:
 1. Download the image as a .tar file and load the image.
 2. Run the docker container to test for functionality.
 3. If the container starts successfully, test each exposed endpoint. If any test fails, exit immediately.
@@ -33,7 +33,7 @@ This job will only run only if the build job is successful.
 ### Deploy Job
 This job will only run only if the test job is successful.
 
-**Steps Overview:**
+#### Steps Overview:
 1. Download the image as a .tar file and load the image.
 2. Save the image tag to step output for later use.
 3. Login to ECR, re-tag the image for upload to ECR and push.

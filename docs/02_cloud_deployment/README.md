@@ -12,21 +12,21 @@ To keep the architecture within the AWS free tier limitations, the following com
 ## Architecture
 ![Current Architecture](./traffic_flow_diagram.svg)
 
-**Subnets:**
+### Subnets:
 - There are two public subnets created in different AZs (Availability Zones) to divide the workload, and to allow for higher service availability.
 - This is also to satisfy the Application Load Balancer (ALB) requirement of having a minimum of two AZs.
 
-**EC2 Instances:**
+### EC2 Instances:
 - The instances serve solely as compute resources for ECS containers, as Fargate incurs additional costs and does not provide a free tier.
 - Each EC2 instance has a public IP address, making it accessible from the internet.
 - While not ideal, this is necessary to enable the instances to register with the ECS control plane. Without public IPs or a NAT gateway, the instances would be unable to access the internet, and as a result, unable to communicate with ECS.
 
-**ECS:**
+### ECS:
 - A maximum of one container runs on each EC2 instance at a time due to task definitions that hard-code the container port. This prevents multiple containers from running on the same instance simultaneously.
 - ECS is configured to run only one container at a time, so that when a new container is started, there is always an instance available to accommodate it during a rolling upgrade.
 - Container images are stored in and retrieved from AWS ECR.
 - The API key is encrypted and stored as a secure string in AWS Systems Manager (SSM) Parameter Store. It is then injected directly into the container, avoiding any exposure outside the container.
 
-**Application Load Balancer:**
+### Application Load Balancer:
 - Instance IP addresses are unreliable because they can change after instance rollovers. Therefore, the ALB DNS name is used as the entry point to the service.
 - ECS service automatically registers and maintains new containers as targets reachable by the ALB. The ALB then distributes traffic to the available containers evenly.

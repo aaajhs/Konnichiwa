@@ -13,10 +13,14 @@ python -m venv venv
 source venv/bin/activate
 ```
 
+---
+
 ### Installing Dependencies
 ```bash
 pip install requests
 ```
+
+---
 
 ### Setting API Key and URL
 ```bash
@@ -24,17 +28,21 @@ export API_KEY=<THE_API_KEY>
 export API_URL=<THE_API_URL>
 ```
 
-**Valid URL Examples:**
+#### Valid URL Examples:
 ```bash
 export API_URL=somedomain.com
 export API_URL=https://somedomain.com
 export API_URL=http://somedomain.com/
 ```
 
+---
+
 ### Running the Script
 ```bash
 python monitor.py
 ```
+
+---
 
 ### Cleanup
 ```bash
