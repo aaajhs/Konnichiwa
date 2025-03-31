@@ -17,6 +17,7 @@ To keep the architecture within the AWS free tier limitations, the following com
 - This is also to satisfy the Application Load Balancer (ALB) requirement of having a minimum of two AZs.
 
 **EC2 Instances:**
+- The instances serve solely as compute resources for ECS containers, as Fargate incurs additional costs and does not provide a free tier.
 - Each EC2 instance has a public IP address, making it accessible from the internet.
 - While not ideal, this is necessary to enable the instances to register with the ECS control plane. Without public IPs or a NAT gateway, the instances would be unable to access the internet, and as a result, unable to communicate with ECS.
 
