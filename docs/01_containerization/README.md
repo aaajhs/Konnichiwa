@@ -40,18 +40,18 @@ Detailed explanations are included directly in the Dockerfile for clarity, as th
 
 ## Usage
 ### Building the Image
-```
+```bash
 docker build -t konnichiwa .
 ```
-The flag `--platform linux/amd64` may be necessary to build an image to run on the cloud infrastructure.
+The flag `--platform linux/amd64` may be necessary to build an image to run on the cloud infrastructure, if building on a non-AMD64 machine such as Apple Silicon.
 
 ### Running the Image Locally
-```
+```bash
 docker run -d --rm -p 4000:4000 -e API_KEY=<THE_API_KEY> --name konnichiwa konnichiwa
 ```
 
 ### Accessing the API
-```
+```bash
 curl -v http://localhost:4000/
 
 curl -v http://localhost:4000/health
